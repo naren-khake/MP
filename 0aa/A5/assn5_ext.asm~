@@ -1,0 +1,151 @@
+;-------------------------macro for printing and reading data----------------------
+
+	%macro print 2
+	mov rax,1
+	mov rdi,0
+	mov rsi,%1
+	mov rdx,%2
+	syscall
+	%endmacro
+	
+	%macro read 2
+	mov rax,0
+	mov rdi,1
+	mov rsi,%1
+	mov rdx,%2
+	syscall
+	%endmacro
+;------------------------------------------------------
+
+section .data
+	
+msg db "No of spaces are-",10
+len equ $-msg
+
+msg1 db "No of lines are-",10
+len1 equ $-msg1
+
+msg2 db "Enter the character",10
+len2 equ $-msg2
+
+msg3 db "No of occurences of entered character are: ",10
+len3 equ $-msg3
+
+newline db 10
+
+count_blank db 00h
+count_line db 00h
+count_char db 00h
+
+section .bss
+
+extern var
+char resb 1
+result resb 2
+
+global space,line,character
+
+section .text
+
+;-------------------counting no of spaces------------------
+
+	space:
+	mov rcx,100
+	mov rsi,var
+	
+	l1:
+	cmp byte[rsi],20h
+	je l2
+	jmp l3
+	
+	l2:
+	inc byte[count_blank]
+	l3:
+	inc rsi
+	loop l1
+	
+	print msg,len
+	mov al,byte[count_blank]
+	call htoa
+	
+	ret
+	
+;-------------------counting no of lines----------------------
+
+	line:
+	mov rcx,100
+	mov rsi,var
+	
+	l4:
+	cmp byte[rsi],0Ah
+	je l5
+	jmp l6
+	
+	l5:
+	inc byte[count_line]
+	l6:
+	inc rsi
+	loop l4
+	
+	print msg1,len1
+	mov al,byte[count_line]
+	call htoa
+	
+	
+	ret
+	
+;--------------------------counting pccurence of a character-----------------
+
+	character:
+	
+	print msg2,len2
+	read char,2
+	
+	mov rcx,100
+	mov rsi,var
+	xor dx,dx
+	
+	l7:
+	mov dl,byte[char]
+	cmp byte[rsi],dl
+	je l8
+	jmp l9
+	
+	l8:
+	inc byte[count_char]
+	l9:
+	inc rsi
+	loop l7
+	
+	print msg3,len3
+	mov al,byte[count_char]
+	call htoa
+	
+	
+	ret
+
+;-------------------ascii to hex---------------
+
+	htoa:
+	mov rdi,result
+	mov rcx,2h
+	xor bl,bl
+	
+	l11:
+	rol al,4
+	mov bl,al
+	and bl,0Fh
+	cmp bl,9h
+	jbe l22
+	add bl,7h
+	
+	l22:
+	add bl,30h
+	mov byte[rdi],bl
+
+	inc rdi
+	loop l11
+
+	print result,2
+	print newline,1
+	ret
